@@ -1,0 +1,17 @@
+#!/usr/bin/python
+from datetime import date
+
+from bs4 import BeautifulSoup
+from requests import get
+
+url = "https://www.nbs.rs/static/nbs_site/gen/cirilica/30/kurs/Indikativni_Kurs_20.html"
+
+response = get(url)
+soup = BeautifulSoup(response.text, 'html.parser')
+
+eurRSD = soup.find("th", {"class": "kurs_e"}).string
+dolarRSD = soup.find("th", {"class": "kurs_d"}).string
+
+print(f"Currency list for {date.today()}: ")
+print(f"EUR/RSD: {eurRSD}")
+print(f"USD/RSD: {dolarRSD}")
