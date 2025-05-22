@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+
+# Script Name: clone_github_repos.sh
+# Author: Stefan Bogdanović <stefan@stefanbogdanovic.dev>
+# Description: This script clones all repositories from a specified GitHub organization
+#              into a designated folder. It requires a GitHub token for authentication.
+# Usage: ./clone_github_repos.sh <TOKEN> <ORG> [FOLDER_NAME]
+#        <TOKEN>       - Your GitHub personal access token (must start with 'ghp').
+#        <ORG>         - The GitHub organization whose repositories you want to clone.
+#        [FOLDER_NAME] - (Optional) The name of the folder where the repositories will be cloned.
+#                         Defaults to the organization name if not provided.
+
+# GitHub Personal Access Token that you can get from
+# https://github.com/settings/tokens
+# (click on “generate a new one” and check all the “repo” and “user” permission scopes)
+
+
+set -euo pipefail
+
+TOKEN=$1
+ORG="$2"
+FOLDER="${3:-$ORG}"  # Default to organization name if no folder is provided
+
+
+RED="\033[0;31m"
+GREEN="\033[0;32m"
+YELLOW="\033[0;33m"
+NC="\033[0m"
+
+# Validate the GitHub token
+if [[ -z "$TOKEN" ]]; then
+  echo -e "${RED} [ERROR]: GitHub Token is required.${NC}"
+  exit 1
+elif [[ ! "$TOKEN" =~ ^ghp ]]; then
+  echo -e "${RED} [ERROR]: GitHub Token must start with 'ghp'.${NC}"
+  exit 1
+fi
+
+if [[ -z "$ORG" ]]; then
+  echo -e "${RED}[ERROR]: Organization is required.${NC}"
+  exit 1
+fi
+
+if ! command -v jq > /dev/null; then
+  echo -e "${RED}jq is not installed.${NC} \n"
+  echo -e "${YELLOW}Please install it using your package manager.${NC}"
+  exit 1
+fi
+
+if ! command -v git > /dev/null; then
+  echo -e "${RED}Git is not installed.${NC} \n"
+  echo -e "${YELLOW}Please install it using your package manager.${NC}"
+  exit 1
+fi
+
+# Create the folder if it doesn't exist
+mkdir -p "$FOLDER"
+
+# Change to the newly created folder
+cd "$FOLDER" || exit
+
+# Clone the repositories
+curl -s -H "Authorization: token $TOKEN" "https://api.github.com/orgs/$ORG/repos?per_page=100" \
+| jq -r ".[].clone_url" \
+| xargs -L1 git clone
+
+echo -e "${GREEN}Cloning completed into folder: $FOLDER${NC}"
