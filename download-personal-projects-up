@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+
+# Script Name: clone_repos.sh
+# Author: Your Name
+# Description: This script clones specified repositories from GitHub into a designated folder.
+# Usage: ./clone_repos.sh <TOKEN> <FOLDER_NAME> <REPO1 REPO2 REPO3 ...>
+#        <TOKEN>       - Your GitHub personal access token (must start with 'ghp').
+#        <FOLDER_NAME> - The name of the folder where the repositories will be cloned.
+#        <REPO1 REPO2 REPO3 ...> - Space-separated list of repository names to clone.
+
+# Enable strict mode
+set -euo pipefail
+
+TOKEN="$1"
+FOLDER="personal"
+shift 1  # Shift the first two parameters so that $@ now contains only the repository names
+REPOS=("$@")  # Create an array from the remaining parameters
+
+USERNAME="CerealKiller97"
+
+RED="\033[0;31m"
+GREEN="\033[0;32m"
+YELLOW="\033[0;33m"
+NC="\033[0m"
+
+# Validate the GitHub token
+if [[ -z "$TOKEN" ]]; then
+  echo -e "${RED} [ERROR]: GitHub Token is required.${NC}"
+  exit 1
+elif [[ ! "$TOKEN" =~ ^ghp ]]; then
+  echo -e "${RED} [ERROR]: GitHub Token must start with 'ghp'.${NC}"
+  exit 1
+fi
+
+# Check for required commands
+if ! command -v jq > /dev/null; then
+  echo -e "${RED}jq is not installed.${NC} \n"
+  echo -e "${YELLOW}Please install it using your package manager.${NC}"
+  exit 1
+fi
+
+if ! command -v git > /dev/null; then
+  echo -e "${RED}Git is not installed.${NC} \n"
+  echo -e "${YELLOW}Please install it using your package manager.${NC}"
+  exit 1
+fi
+
+# Create the folder if it doesn't exist
+mkdir -p "$FOLDER"
+
+# Change to the newly created folder
+cd "$FOLDER" || exit
+
+# Clone the specified repositories
+for REPO in "${REPOS[@]}"; do
+  echo -e "${GREEN}Cloning repository: $REPO${NC}"
+  git clone "https://github.com/$USERNAME/$REPO.git"
+done
+
+echo -e "${GREEN}Cloning completed into folder: $FOLDER${NC}"
